@@ -1,12 +1,19 @@
 var express = require('express');
 var router = express.Router();
-const game_controller = require('../controllers/gameController')
+const game_controller = require('../controllers/gameController');
 const team_controller = require('../controllers/teamController');
 
-// create game
-router.post('/create', game_controller.game_create_post);
+// Create a new game
+router.post('/new', game_controller.game_create_post);
 
-//create a team
+// Get a game
+router.get('/:id', game_controller.game_get);
+
+// create a team
 router.post('/:id', team_controller.team_create_post);
 
 module.exports = router;
+
+
+// //create a team
+// router.post('/:id', team_controller.team_create_post);

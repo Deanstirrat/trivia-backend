@@ -5,14 +5,13 @@ const Schema = mongoose.Schema;
 
 const TeamSchema = new Schema({
     teamName: { type: String },
-    game: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Game',
-    },
-    answers: {
+    rounds: {
         type: [{
             round: { type: Number },
-            answers: [{ type: String }]
+            answers: [{
+                answer: { type: String },
+                isCorrect: { type: Boolean }
+            }] 
         }],
         default: []
     }

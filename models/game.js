@@ -1,18 +1,24 @@
 const mongoose = require('mongoose');
 
 const GameSchema = new mongoose.Schema({
-  teams: {
-    type: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Team',
-    }],
-  default: []
+  joinCode: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 5,
+    maxlength: 5,
+    match: /^[a-z0-9]{5}$/ // Regex pattern to enforce lowercase letters and numbers
   },
   host: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Host'
+    type: {
+      hostId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Host'
+      },
+      socketId: { type: String },
+    },
   },
-  scoreboard: {
+  teams: {
   type: [{
     team: {
       type: mongoose.Schema.Types.ObjectId,
@@ -21,6 +27,9 @@ const GameSchema = new mongoose.Schema({
     score: {
       type: Number,
       default: 0
+    },
+    socketId: {
+      type: String
     }
   }],
   default: []
@@ -31,8 +40,16 @@ const GameSchema = new mongoose.Schema({
   },
   currentRound: {
     type: Number,
-    default: 0
+    default: -1
+  },
+  currentQuestion: {
+    type: Number,
+    default: -1
+  },
+  script: {
+    type: {},
+    default: null
   }
-});
+},{ timestamps: true });
 
 module.exports = mongoose.model('Game', GameSchema);

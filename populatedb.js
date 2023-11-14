@@ -4,6 +4,35 @@ const Quiz = require('./models/quiz');
 const QuestionSet = require('./models/questionSet');
 require('dotenv').config()
 const bcrypt = require('bcrypt');
+const axios = require('axios');
+const he = require('he');
+
+//get and decode session token from api
+async function retrieveSessionToken() {
+    try {
+        const response = await axios.get('https://opentdb.com/api_token.php?command=request');
+        const sessionToken = response.data.token;
+        return sessionToken;
+    } catch (error) {
+        console.log('Error retrieving session token:', error);
+        throw error;
+    }
+}
+
+async function getQuestionsFromAPI(numQuestions) {
+try {
+    const response = await axios.get(`https://api.api-ninjas.com/v1/trivia?limit=${numQuestions}`, {
+        headers: {
+            'X-Api-Key': process.env.API_NINJA_KEY,
+        }
+    });
+    const questions = response.data;
+    return questions;
+} catch (error) {
+    console.log('Error retrieving questions:', error);
+    throw error;
+}
+}
 
 // Set up mongoose connection
 mongoose.set("strictQuery", false);
@@ -22,24 +51,57 @@ async function main() {
 
   async function quizCreate(){
     try {
-        const name='quiz1';
-        const theme = 'halloween';
 
-        //check if quiz exists
+        const name = 'Nov-13-23';
+        const theme = 'random';
+
+        // check if quiz exists
         const existingQuiz = await Quiz.findOne({ name });
         if(existingQuiz){
             console.log('Quiz with this name already exists');
             return;
         }
+        
+        const rounds = [];
 
-        //create question
-        const question = { id: 1, question: 'What is the capital of France?', answer: 'Paris'};
+        for (let i = 0; i < 6; i++) {
+            // Make a call to the API to get 10 questions
+            const apiQuestions = await getQuestionsFromAPI(10);
+      
+            // Create an array to store the questions for this round
+            const roundQuestions = [];
+      
+            // Extract the question and answer from each question object
+            for (const apiQuestion of apiQuestions) {
+              const newQuestion = {question: apiQuestion.question, answer: apiQuestion.answer};
+      
+              // Push the new question object into the roundQuestions array
+              roundQuestions.push(newQuestion);
+            }
+      
+            // Create a round object with the questions
+            const round = { questions: roundQuestions };
+      
+            // Push the round object into the rounds array
+            rounds.push(round);
+        }
 
-        // Create a Round with the Question
-        const round = { id: 1, questions: [question] };
+
+        // //create questions
+        // const question1 = { id: 1, question: 'What is the capital of France?', answer: 'Paris'};
+        // const question2 = { id: 2, question: 'What is Megans middle name?', answer: 'Riley'};
+        // const question3 = { id: 3, question: 'What country is mount Everest in?', answer: 'Nepal'};
+
+        // const question4 = { id: 1, question: 'What color is the sky?', answer: 'Blue'};
+        // const question5 = { id: 2, question: 'What goes up...?', answer: 'Must Come down'};
+        // const question6 = { id: 3, question: 'How long is a presidential term?', answer: '4 years'};
+
+        // // Create a Rounds with the Questions
+        // const round1 = { id: 1, questions: [question1, question2, question3] };
+        // const round2 = { id: 2, questions: [question4, question5, question6] };
 
         // Create a QuestionSet with the Round
-        const questionSet = new QuestionSet({ rounds: [round] });
+        const questionSet = new QuestionSet({ rounds: rounds });
         await questionSet.save();
 
         //create quiz and save
